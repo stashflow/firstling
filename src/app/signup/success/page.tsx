@@ -17,7 +17,7 @@ export default function SignupSuccessPage() {
           <Check className="size-8" strokeWidth={3} />
         </div>
         <p className="mt-8 text-sm font-black uppercase text-[#34c759]">
-          Founding spot claimed
+          Plan started
         </p>
         <h1 className="mx-auto mt-3 max-w-xl text-5xl font-black leading-[0.94]">
           Your First Ring setup is started.

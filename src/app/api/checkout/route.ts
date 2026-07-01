@@ -8,7 +8,34 @@ type CheckoutPayload = {
   ownerName?: string;
   email?: string;
   phone?: string;
+  plan?: string;
 };
+
+const plans = {
+  starter: {
+    name: "First Ring Starter",
+    amount: 2900,
+    minutes: "50 AI minutes",
+    extra: "$0.20-$0.25/min",
+    envKey: "STRIPE_STARTER_PRICE_ID",
+  },
+  basic: {
+    name: "First Ring Basic",
+    amount: 4900,
+    minutes: "100 AI minutes",
+    extra: "$0.20/min",
+    envKey: "STRIPE_BASIC_PRICE_ID",
+  },
+  growth: {
+    name: "First Ring Growth",
+    amount: 9900,
+    minutes: "300 AI minutes",
+    extra: "$0.18-$0.20/min",
+    envKey: "STRIPE_GROWTH_PRICE_ID",
+  },
+} as const;
+
+type PlanKey = keyof typeof plans;
 
 function clean(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -47,6 +74,9 @@ export async function POST(request: NextRequest) {
   const ownerName = clean(payload.ownerName);
   const email = clean(payload.email);
   const phone = clean(payload.phone);
+  const planKey = clean(payload.plan) as PlanKey;
+  const selectedPlanKey: PlanKey = planKey in plans ? planKey : "starter";
+  const plan = plans[selectedPlanKey];
 
   if (!businessName || !ownerName || !email) {
     return NextResponse.json(
@@ -60,34 +90,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const stripe = stripeClient();
-    const setupPriceId = process.env.STRIPE_FOUNDING_SETUP_PRICE_ID;
-    const monthlyPriceId = process.env.STRIPE_FOUNDING_MONTHLY_PRICE_ID;
+    const priceId = process.env[plan.envKey];
     const siteUrl = siteUrlFrom(request);
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
-      setupPriceId
-        ? { price: setupPriceId, quantity: 1 }
+      priceId
+        ? { price: priceId, quantity: 1 }
         : {
             price_data: {
               currency: "usd",
-              unit_amount: 3900,
-              product_data: {
-                name: "First Ring Founding Setup",
-                description: "One-time setup for your First Ring caller.",
-              },
-            },
-            quantity: 1,
-          },
-      monthlyPriceId
-        ? { price: monthlyPriceId, quantity: 1 }
-        : {
-            price_data: {
-              currency: "usd",
-              unit_amount: 2900,
+              unit_amount: plan.amount,
               recurring: { interval: "month" },
               product_data: {
-                name: "First Ring Founding Plan",
-                description: "Monthly missed-call answering and lead capture.",
+                name: plan.name,
+                description: `${plan.minutes}. Extra minutes: ${plan.extra}.`,
               },
             },
             quantity: 1,
@@ -103,14 +119,14 @@ export async function POST(request: NextRequest) {
         businessName,
         ownerName,
         phone,
-        plan: "founding-exterior-cleaning",
+        plan: selectedPlanKey,
       },
       subscription_data: {
         metadata: {
           businessName,
           ownerName,
           phone,
-          plan: "founding-exterior-cleaning",
+          plan: selectedPlanKey,
         },
       },
       success_url: `${siteUrl}/signup/success?session_id={CHECKOUT_SESSION_ID}`,

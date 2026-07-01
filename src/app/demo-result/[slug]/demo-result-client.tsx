@@ -203,7 +203,7 @@ export function DemoResultClient({ call }: { call: DemoCall }) {
 
         <section className="mt-5 rounded-[2.4rem] bg-[#34C759] p-6 text-center text-white shadow-[0_24px_70px_rgba(52,199,89,0.24)] sm:p-10">
           <p className="text-sm font-black uppercase text-white/70">
-            Founding Exterior Cleaning Plan
+            First Ring Plans
           </p>
           <h2 className="mx-auto mt-4 max-w-3xl text-5xl font-black leading-[0.94]">
             Your next customer might call tonight.
@@ -212,14 +212,14 @@ export function DemoResultClient({ call }: { call: DemoCall }) {
             First Ring answers before they leave.
           </p>
           <p className="mt-5 text-2xl font-black">
-            $39 setup + $29/month
+            Plans start at $29/month
           </p>
           <p className="text-sm font-bold text-white/70">
-            First 10 businesses only.
+            Starter, Basic, and Growth options available.
           </p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild variant="secondary" size="lg">
-              <Link href="/signup">Claim Founding Offer</Link>
+              <Link href="/signup">Choose a Plan</Link>
             </Button>
             <Button asChild size="lg" className="bg-white/18 ring-1 ring-white/25">
               <a href={`tel:${demoPhone}`}>

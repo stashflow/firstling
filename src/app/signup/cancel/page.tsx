@@ -20,8 +20,8 @@ export default function SignupCancelPage() {
           No charge was made.
         </h1>
         <p className="mx-auto mt-5 max-w-lg text-lg font-bold leading-snug text-black/58">
-          You can go back to claim the founding offer, or call the demo first if
-          you want to hear how First Ring handles a missed call.
+          You can go back to choose a plan, or call the demo first if you want
+          to hear how First Ring handles a missed call.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Button asChild size="lg">

@@ -10,29 +10,62 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Wordmark } from "@/components/wordmark";
 
 const demoPhone = "+12137145090";
 
-const included = [
-  "Custom First Ring script",
-  "Missed and after-hours answering",
-  "Lead summary emails",
-  "Customer contact capture",
-  "Service, location, timing, and notes",
-  "100 included minutes/month",
+const plans = [
+  {
+    id: "starter",
+    name: "Starter",
+    price: "$29/mo",
+    minutes: "50 AI minutes",
+    extra: "$0.20-$0.25/min extra",
+    note: "Good for tiny businesses/testing",
+  },
+  {
+    id: "basic",
+    name: "Basic",
+    price: "$49/mo",
+    minutes: "100 AI minutes",
+    extra: "$0.20/min extra",
+    note: "Best for most small exterior cleaning businesses",
+  },
+  {
+    id: "growth",
+    name: "Growth",
+    price: "$99/mo",
+    minutes: "300 AI minutes",
+    extra: "$0.18-$0.20/min extra",
+    note: "For busier teams with more call volume",
+  },
 ] as const;
+
+type PlanId = (typeof plans)[number]["id"];
 
 export default function SignupPage() {
   const [businessName, setBusinessName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [plan, setPlan] = useState<PlanId>("starter");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
+  const selectedPlan = plans.find((item) => item.id === plan) || plans[0];
+
+  useEffect(() => {
+    const requestedPlan = new URLSearchParams(window.location.search).get(
+      "plan",
+    );
+    const matchedPlan = plans.find((item) => item.id === requestedPlan);
+
+    if (matchedPlan) {
+      setPlan(matchedPlan.id);
+    }
+  }, []);
 
   async function startCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,7 +76,7 @@ export default function SignupPage() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ businessName, ownerName, email, phone }),
+        body: JSON.stringify({ businessName, ownerName, email, phone, plan }),
       });
       const result = (await response.json()) as {
         success?: boolean;
@@ -86,7 +119,7 @@ export default function SignupPage() {
             transition={{ duration: 0.55 }}
           >
             <p className="text-sm font-black uppercase text-[#34c759]">
-              Founding Exterior Cleaning Plan
+              Plans
             </p>
             <h1 className="mt-4 max-w-2xl text-5xl font-black leading-[0.93] sm:text-7xl">
               Start catching missed calls.
@@ -99,26 +132,30 @@ export default function SignupPage() {
             <Card className="mt-7 overflow-hidden">
               <div className="bg-[#101211] p-7 text-white">
                 <p className="text-sm font-black uppercase text-[#34c759]">
-                  First 10 businesses only
+                  Selected plan
                 </p>
                 <div className="mt-5 flex flex-wrap items-end gap-x-3 gap-y-1">
-                  <span className="text-5xl font-black">$39 setup</span>
+                  <span className="text-5xl font-black">
+                    {selectedPlan.price}
+                  </span>
                   <span className="pb-1 text-2xl font-black text-white/62">
-                    + $29/month
+                    {selectedPlan.name}
                   </span>
                 </div>
               </div>
-              <div className="grid gap-3 p-6 sm:grid-cols-2">
-                {included.map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#34c759] text-white">
-                      <Check className="size-4" strokeWidth={3} />
-                    </span>
-                    <span className="font-extrabold text-black/70">
-                      {item}
-                    </span>
-                  </div>
-                ))}
+              <div className="grid gap-3 p-6">
+                {[selectedPlan.minutes, selectedPlan.extra, selectedPlan.note].map(
+                  (item) => (
+                    <div key={item} className="flex items-center gap-3">
+                      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#34c759] text-white">
+                        <Check className="size-4" strokeWidth={3} />
+                      </span>
+                      <span className="font-extrabold text-black/70">
+                        {item}
+                      </span>
+                    </div>
+                  ),
+                )}
               </div>
             </Card>
           </motion.div>
@@ -142,6 +179,36 @@ export default function SignupPage() {
               </div>
 
               <form onSubmit={startCheckout} className="mt-7 grid gap-4">
+                <div className="grid gap-2">
+                  <span className="text-sm font-black text-black/45">
+                    Choose plan
+                  </span>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {plans.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setPlan(item.id)}
+                        className={`rounded-[1.2rem] border p-4 text-left transition ${
+                          plan === item.id
+                            ? "border-[#101211] bg-[#101211] text-white shadow-[0_14px_34px_rgba(15,23,42,0.18)]"
+                            : "border-black/8 bg-white text-[#101211] hover:border-[#34c759]/60"
+                        }`}
+                      >
+                        <span className="block text-sm font-black uppercase opacity-60">
+                          {item.name}
+                        </span>
+                        <span className="mt-2 block text-2xl font-black">
+                          {item.price}
+                        </span>
+                        <span className="mt-2 block text-xs font-bold leading-snug opacity-62">
+                          {item.minutes}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <label className="grid gap-2">
                   <span className="text-sm font-black text-black/45">
                     Business name
@@ -211,7 +278,7 @@ export default function SignupPage() {
                     </>
                   ) : (
                     <>
-                      Pay $39 + start $29/month
+                      Start {selectedPlan.name} at {selectedPlan.price}
                       <CreditCard className="size-5" />
                     </>
                   )}

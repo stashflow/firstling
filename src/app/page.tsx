@@ -70,6 +70,33 @@ const included = [
   "100 included minutes/month",
 ] as const;
 
+const pricingPlans = [
+  {
+    id: "starter",
+    name: "Starter",
+    price: "$29/mo",
+    minutes: "50 AI minutes",
+    extra: "$0.20-$0.25/min extra",
+    note: "Good for tiny businesses/testing",
+  },
+  {
+    id: "basic",
+    name: "Basic",
+    price: "$49/mo",
+    minutes: "100 AI minutes",
+    extra: "$0.20/min extra",
+    note: "Best first plan for steady missed-call capture",
+  },
+  {
+    id: "growth",
+    name: "Growth",
+    price: "$99/mo",
+    minutes: "300 AI minutes",
+    extra: "$0.18-$0.20/min extra",
+    note: "For busier teams with more after-hours volume",
+  },
+] as const;
+
 const resultFields = [
   ["Customer", "Sarah M."],
   ["Phone", "(404) 555-0188"],
@@ -336,7 +363,7 @@ export default function Home() {
               </Button>
             <Button asChild variant="secondary" size="lg">
                 <a href="/signup">
-                  Claim Founding Offer
+                  Choose a Plan
                   <ArrowDownRight className="size-5" />
                 </a>
               </Button>
@@ -462,12 +489,12 @@ export default function Home() {
       </MotionSection>
 
       <MotionSection id="offer" className="bg-[#34c759] text-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="mx-auto max-w-6xl">
           <div>
             <p className="text-sm font-black uppercase text-white/70">
-              Founding Exterior Cleaning Plan
+              Plans
             </p>
-            <h2 className="mt-4 text-5xl font-black leading-[0.93] sm:text-6xl">
+            <h2 className="mt-4 max-w-3xl text-5xl font-black leading-[0.93] sm:text-6xl">
               Catch the call before they call the next company.
             </h2>
             <p className="mt-5 max-w-xl text-xl font-extrabold leading-snug text-white/76">
@@ -476,50 +503,60 @@ export default function Home() {
             </p>
           </div>
 
-          <Card className="overflow-hidden bg-white text-[#101211]">
-            <div className="bg-[#101211] p-7 text-white sm:p-9">
-              <p className="text-sm font-black uppercase text-[#34c759]">
-                First 10 businesses only
-              </p>
-              <div className="mt-5 flex flex-wrap items-end gap-x-3 gap-y-1">
-                <span className="text-5xl font-black">$39 setup</span>
-                <span className="pb-1 text-2xl font-black text-white/62">
-                  + $29/month
-                </span>
-              </div>
-              <p className="mt-4 text-base font-bold text-white/58">
-                Extra minutes billed separately.
-              </p>
-            </div>
-            <div className="p-6 sm:p-8">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {included.map((item) => (
-                  <div key={item} className="flex items-center gap-3">
-                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#34c759] text-white">
-                      <Check className="size-4" strokeWidth={3} />
-                    </span>
-                    <span className="font-extrabold text-black/70">
-                      {item}
-                    </span>
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            {pricingPlans.map((plan) => (
+              <Card
+                key={plan.id}
+                className={cn(
+                  "overflow-hidden bg-white text-[#101211]",
+                  plan.id === "basic" ? "ring-4 ring-white/40" : "",
+                )}
+              >
+                <div className="bg-[#101211] p-6 text-white">
+                  <p className="text-sm font-black uppercase text-[#34c759]">
+                    {plan.name}
+                  </p>
+                  <p className="mt-4 text-5xl font-black leading-none">
+                    {plan.price}
+                  </p>
+                  <p className="mt-3 text-sm font-bold leading-snug text-white/58">
+                    {plan.note}
+                  </p>
+                </div>
+                <div className="p-6">
+                  <div className="grid gap-3">
+                    {[plan.minutes, plan.extra, ...included.slice(0, 4)].map(
+                      (item) => (
+                        <div key={item} className="flex items-center gap-3">
+                          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#34c759] text-white">
+                            <Check className="size-4" strokeWidth={3} />
+                          </span>
+                          <span className="font-extrabold text-black/70">
+                            {item}
+                          </span>
+                        </div>
+                      ),
+                    )}
                   </div>
-                ))}
-              </div>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Button asChild size="lg" className="flex-1">
-                  <a href="/signup">
-                    <ArrowDownRight className="size-5" />
-                    Claim Founding Offer
-                  </a>
-                </Button>
-                <Button asChild variant="secondary" size="lg" className="flex-1">
-                  <a href={`tel:${demoPhone}`}>
-                    <Play className="size-5" />
-                    Call Demo
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </Card>
+                  <Button asChild size="lg" className="mt-6 w-full">
+                    <a href={`/signup?plan=${plan.id}`}>
+                      <ArrowDownRight className="size-5" />
+                      Choose {plan.name}
+                    </a>
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <Button asChild variant="secondary" size="lg">
+              <a href={`tel:${demoPhone}`}>
+                <Play className="size-5" />
+                Call Demo First
+              </a>
+            </Button>
+          </div>
         </div>
       </MotionSection>
 
