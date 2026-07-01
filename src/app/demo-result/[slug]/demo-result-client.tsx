@@ -212,14 +212,14 @@ export function DemoResultClient({ call }: { call: DemoCall }) {
             First Ring answers before they leave.
           </p>
           <p className="mt-5 text-2xl font-black">
-            $149 setup + $99/month
+            $39 setup + $29/month
           </p>
           <p className="text-sm font-bold text-white/70">
             First 10 businesses only.
           </p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild variant="secondary" size="lg">
-              <Link href="/#offer">Claim Founding Offer</Link>
+              <Link href="/signup">Claim Founding Offer</Link>
             </Button>
             <Button asChild size="lg" className="bg-white/18 ring-1 ring-white/25">
               <a href={`tel:${demoPhone}`}>

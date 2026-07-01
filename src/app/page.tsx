@@ -334,9 +334,9 @@ export default function Home() {
                   Call the Demo
                 </a>
               </Button>
-              <Button asChild variant="secondary" size="lg">
-                <a href="#offer">
-                  See Pricing
+            <Button asChild variant="secondary" size="lg">
+                <a href="/signup">
+                  Claim Founding Offer
                   <ArrowDownRight className="size-5" />
                 </a>
               </Button>
@@ -482,9 +482,9 @@ export default function Home() {
                 First 10 businesses only
               </p>
               <div className="mt-5 flex flex-wrap items-end gap-x-3 gap-y-1">
-                <span className="text-5xl font-black">$149 setup</span>
+                <span className="text-5xl font-black">$39 setup</span>
                 <span className="pb-1 text-2xl font-black text-white/62">
-                  + $99/month
+                  + $29/month
                 </span>
               </div>
               <p className="mt-4 text-base font-bold text-white/58">
@@ -506,8 +506,8 @@ export default function Home() {
               </div>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="flex-1">
-                  <a href={`tel:${demoPhone}`}>
-                    <PhoneCall className="size-5" />
+                  <a href="/signup">
+                    <ArrowDownRight className="size-5" />
                     Claim Founding Offer
                   </a>
                 </Button>
