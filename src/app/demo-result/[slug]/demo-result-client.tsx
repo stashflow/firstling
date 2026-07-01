@@ -9,6 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Wordmark } from "@/components/wordmark";
 import type { DemoCall } from "@/lib/demo-calls";
 
+const demoPhone = "+12137145090";
+
 function Field({
   label,
   value,
@@ -220,10 +222,10 @@ export function DemoResultClient({ call }: { call: DemoCall }) {
               <Link href="/#offer">Claim Founding Offer</Link>
             </Button>
             <Button asChild size="lg" className="bg-white/18 ring-1 ring-white/25">
-              <Link href="/#demo">
+              <a href={`tel:${demoPhone}`}>
                 <PhoneCall className="size-5" />
                 Call Demo Again
-              </Link>
+              </a>
             </Button>
           </div>
         </section>

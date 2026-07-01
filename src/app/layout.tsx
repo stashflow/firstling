@@ -9,7 +9,7 @@ const onest = Onest({
 });
 
 export const metadata: Metadata = {
-  title: "First Ring | AI Phone Receptionist for Exterior Cleaning",
+  title: "First Ring | Phone Receptionist for Exterior Cleaning",
   description:
     "First Ring answers missed and after-hours calls for exterior cleaning businesses before the customer calls the next company.",
 };
