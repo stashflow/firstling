@@ -33,6 +33,7 @@ export type Client = {
   websiteUrl?: string | null;
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
+  clerkUserId?: string | null;
   planName: PlanName | string;
   monthlyPrice: number;
   includedMinutes: number;
@@ -45,8 +46,27 @@ export type Client = {
   callerStatus: string;
   callerNotes?: string | null;
   callerLiveAt?: string | null;
+  setupEmailSentAt?: string | null;
+  readyEmailSentAt?: string | null;
+  lastPortalLoginAt?: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type UsageCall = {
+  id: string;
+  clientId: string;
+  externalCallId: string;
+  callerNumber?: string | null;
+  durationSeconds: number;
+  billableMinutes: number;
+  estimatedCost: number;
+  callStatus: string;
+  leadName?: string | null;
+  serviceRequested?: string | null;
+  bookingStatus?: string | null;
+  transcriptSummary?: string | null;
+  createdAt: string;
 };
 
 export type UsageCallInput = {
@@ -77,6 +97,14 @@ export type UsageDashboardRow = Client & {
   warningLevel: "green" | "yellow" | "red";
 };
 
+export type OverageBillingCandidate = Client & {
+  month: string;
+  totalMinutes: number;
+  overageMinutes: number;
+  overageRevenue: number;
+  existingRunStatus?: string | null;
+};
+
 type ClientRow = {
   id: string;
   business_name: string;
@@ -86,6 +114,7 @@ type ClientRow = {
   website_url: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  clerk_user_id: string | null;
   plan_name: string;
   monthly_price: string | number;
   included_minutes: string | number;
@@ -98,14 +127,41 @@ type ClientRow = {
   caller_status: string;
   caller_notes: string | null;
   caller_live_at: string | null;
+  setup_email_sent_at: string | null;
+  ready_email_sent_at: string | null;
+  last_portal_login_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type UsageCallRow = {
+  id: string;
+  client_id: string;
+  external_call_id: string;
+  caller_number: string | null;
+  duration_seconds: string | number;
+  billable_minutes: string | number;
+  estimated_cost: string | number;
+  call_status: string;
+  lead_name: string | null;
+  service_requested: string | null;
+  booking_status: string | null;
+  transcript_summary: string | null;
+  created_at: string;
 };
 
 type UsageDashboardDbRow = ClientRow & {
   total_calls: string | number | null;
   total_minutes: string | number | null;
   estimated_call_cost: string | number | null;
+};
+
+type OverageBillingRow = ClientRow & {
+  month: string;
+  total_minutes: string | number;
+  overage_minutes: string | number;
+  overage_revenue: string | number;
+  existing_run_status: string | null;
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -186,6 +242,7 @@ function mapClient(row: ClientRow): Client {
     websiteUrl: row.website_url,
     stripeCustomerId: row.stripe_customer_id,
     stripeSubscriptionId: row.stripe_subscription_id,
+    clerkUserId: row.clerk_user_id,
     planName: row.plan_name,
     monthlyPrice: centsToDollars(row.monthly_price),
     includedMinutes: Number(row.included_minutes || 0),
@@ -198,8 +255,29 @@ function mapClient(row: ClientRow): Client {
     callerStatus: row.caller_status,
     callerNotes: row.caller_notes,
     callerLiveAt: row.caller_live_at,
+    setupEmailSentAt: row.setup_email_sent_at,
+    readyEmailSentAt: row.ready_email_sent_at,
+    lastPortalLoginAt: row.last_portal_login_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+function mapUsageCall(row: UsageCallRow): UsageCall {
+  return {
+    id: row.id,
+    clientId: row.client_id,
+    externalCallId: row.external_call_id,
+    callerNumber: row.caller_number,
+    durationSeconds: Number(row.duration_seconds || 0),
+    billableMinutes: Number(row.billable_minutes || 0),
+    estimatedCost: Number(row.estimated_cost || 0),
+    callStatus: row.call_status,
+    leadName: row.lead_name,
+    serviceRequested: row.service_requested,
+    bookingStatus: row.booking_status,
+    transcriptSummary: row.transcript_summary,
+    createdAt: row.created_at,
   };
 }
 
@@ -392,6 +470,94 @@ export async function getClientById(id: string) {
   return rows[0] ? mapClient(rows[0]) : null;
 }
 
+export async function getClientForPortal(input: {
+  clerkUserId: string;
+  email?: string | null;
+}) {
+  const sql = getSql();
+  const email = input.email?.trim().toLowerCase() || null;
+  const rows = (await sql`
+    select *
+    from clients
+    where
+      clerk_user_id = ${input.clerkUserId}
+      or (
+        ${email}::text is not null
+        and lower(notification_email) = ${email}
+      )
+    order by
+      case when clerk_user_id = ${input.clerkUserId} then 0 else 1 end,
+      created_at desc
+    limit 1
+  `) as ClientRow[];
+
+  if (!rows[0]) {
+    return null;
+  }
+
+  const client = mapClient(rows[0]);
+
+  if (!client.clerkUserId) {
+    await sql`
+      update clients
+      set
+        clerk_user_id = ${input.clerkUserId},
+        last_portal_login_at = now(),
+        updated_at = now()
+      where id = ${client.id}
+    `;
+    return { ...client, clerkUserId: input.clerkUserId };
+  }
+
+  await sql`
+    update clients
+    set last_portal_login_at = now()
+    where id = ${client.id}
+  `;
+
+  return client;
+}
+
+export async function getClientMonthlyUsage(clientId: string, month = new Date()) {
+  const rows = await listUsageDashboard(month);
+  return rows.find((row) => row.id === clientId) || null;
+}
+
+export async function listRecentClientCalls(clientId: string, limit = 8) {
+  const sql = getSql();
+  const rows = (await sql`
+    select *
+    from calls
+    where client_id = ${clientId}
+    order by created_at desc
+    limit ${limit}
+  `) as UsageCallRow[];
+
+  return rows.map(mapUsageCall);
+}
+
+export async function markClientSetupEmailSent(clientId: string) {
+  const sql = getSql();
+  await sql`
+    update clients
+    set
+      setup_email_sent_at = coalesce(setup_email_sent_at, now()),
+      updated_at = now()
+    where id = ${clientId}
+  `;
+}
+
+export async function markClientReadyEmailSent(clientId: string) {
+  const sql = getSql();
+  await sql`
+    update clients
+    set
+      ready_email_sent_at = now(),
+      updated_at = now()
+    where id = ${clientId}
+  `;
+}
+
 export async function updateClientCallerSetup(
   id: string,
   input: {
@@ -554,14 +720,17 @@ export async function insertUsageCall(input: UsageCallInput) {
       booking_status = excluded.booking_status,
       transcript_summary = excluded.transcript_summary,
       raw_payload = excluded.raw_payload
-    returning id
-  `) as Array<{ id: string }>;
+    returning *
+  `) as UsageCallRow[];
 
   await upsertMonthlyUsage(client.id);
 
+  const call = mapUsageCall(rows[0]);
+
   return {
-    id: rows[0].id,
+    id: call.id,
     client,
+    call,
     billableMinutes: minutes,
     estimatedCost,
   };
@@ -699,4 +868,112 @@ export async function listUsageDashboard(month = new Date()) {
       warningLevel,
     };
   });
+}
+
+export function monthStart(date = new Date()) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+}
+
+export function previousMonthStart(date = new Date()) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));
+}
+
+export async function listOverageBillingCandidates(month = previousMonthStart()) {
+  const sql = getSql();
+  const startedAt = monthStart(month);
+  const rows = (await sql`
+    select
+      c.*,
+      mu.month,
+      mu.total_minutes,
+      mu.overage_minutes,
+      mu.overage_revenue,
+      obr.status as existing_run_status
+    from monthly_usage mu
+    join clients c on c.id = mu.client_id
+    left join overage_billing_runs obr
+      on obr.client_id = c.id
+      and obr.month = mu.month
+    where
+      mu.month = ${startedAt.toISOString()}::date
+      and mu.overage_minutes > 0
+      and c.billing_status = 'active'
+      and c.stripe_customer_id is not null
+      and (
+        obr.id is null
+        or obr.status in ('failed', 'pending')
+      )
+    order by c.business_name asc
+  `) as OverageBillingRow[];
+
+  return rows.map((row): OverageBillingCandidate => ({
+    ...mapClient(row),
+    month: row.month,
+    totalMinutes: Number(row.total_minutes || 0),
+    overageMinutes: Number(row.overage_minutes || 0),
+    overageRevenue: Number(row.overage_revenue || 0),
+    existingRunStatus: row.existing_run_status,
+  }));
+}
+
+export async function refreshMonthlyUsageForAllClients(month = new Date()) {
+  const clients = await listClients();
+
+  await Promise.all(
+    clients.map((client) => upsertMonthlyUsage(client.id, month)),
+  );
+
+  return clients.length;
+}
+
+export async function recordOverageBillingRun(input: {
+  clientId: string;
+  month: Date | string;
+  overageMinutes: number;
+  overageRate: number;
+  amount: number;
+  stripeInvoiceItemId?: string | null;
+  stripeInvoiceId?: string | null;
+  status: "pending" | "invoiced" | "skipped" | "failed";
+  errorMessage?: string | null;
+}) {
+  const sql = getSql();
+  const month =
+    input.month instanceof Date
+      ? monthStart(input.month).toISOString()
+      : input.month;
+
+  await sql`
+    insert into overage_billing_runs (
+      client_id,
+      month,
+      overage_minutes,
+      overage_rate,
+      amount,
+      stripe_invoice_item_id,
+      stripe_invoice_id,
+      status,
+      error_message
+    ) values (
+      ${input.clientId},
+      ${month}::date,
+      ${input.overageMinutes},
+      ${input.overageRate},
+      ${input.amount},
+      ${input.stripeInvoiceItemId || null},
+      ${input.stripeInvoiceId || null},
+      ${input.status},
+      ${input.errorMessage || null}
+    )
+    on conflict (client_id, month) do update
+    set
+      overage_minutes = excluded.overage_minutes,
+      overage_rate = excluded.overage_rate,
+      amount = excluded.amount,
+      stripe_invoice_item_id = excluded.stripe_invoice_item_id,
+      stripe_invoice_id = excluded.stripe_invoice_id,
+      status = excluded.status,
+      error_message = excluded.error_message,
+      updated_at = now()
+  `;
 }

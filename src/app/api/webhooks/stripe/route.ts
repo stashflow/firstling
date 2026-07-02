@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getStripe } from "@/lib/stripe";
 import {
+  markClientSetupEmailSent,
   updateClientBillingByStripe,
   upsertClientFromSignup,
 } from "@/lib/usage";
+import { sendClientSetupStartedEmail } from "@/lib/notifications";
 
 export const runtime = "nodejs";
-
-function stripeClient() {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-
-  if (!secretKey) {
-    throw new Error("Missing STRIPE_SECRET_KEY");
-  }
-
-  return new Stripe(secretKey);
-}
+export const dynamic = "force-dynamic";
 
 function stripeId(value: unknown) {
   if (typeof value === "string") {
@@ -52,7 +46,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.text();
-    const event = stripeClient().webhooks.constructEvent(
+    const event = getStripe().webhooks.constructEvent(
       body,
       signature,
       webhookSecret,
@@ -64,7 +58,7 @@ export async function POST(request: NextRequest) {
         const businessName = session.metadata?.businessName;
 
         if (businessName) {
-          await upsertClientFromSignup({
+          const client = await upsertClientFromSignup({
             businessName,
             ownerName: session.metadata?.ownerName,
             notificationEmail: session.customer_email,
@@ -86,6 +80,18 @@ export async function POST(request: NextRequest) {
               extraNotes: session.metadata?.extraNotes,
             },
           });
+
+          if (!client.setupEmailSentAt) {
+            try {
+              const sent = await sendClientSetupStartedEmail(client);
+
+              if (sent) {
+                await markClientSetupEmailSent(client.id);
+              }
+            } catch (error) {
+              console.error("Setup email failed", error);
+            }
+          }
         }
 
         console.info(`Stripe event received: ${event.type}`);

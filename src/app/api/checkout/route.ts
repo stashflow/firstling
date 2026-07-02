@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getStripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type CheckoutPayload = {
   businessName?: string;
@@ -58,16 +60,6 @@ function siteUrlFrom(request: NextRequest) {
   );
 }
 
-function stripeClient() {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-
-  if (!secretKey) {
-    throw new Error("Missing STRIPE_SECRET_KEY");
-  }
-
-  return new Stripe(secretKey);
-}
-
 export async function POST(request: NextRequest) {
   let payload: CheckoutPayload;
 
@@ -112,7 +104,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const stripe = stripeClient();
+    const stripe = getStripe();
     const priceId = process.env[plan.envKey];
     const siteUrl = siteUrlFrom(request);
 

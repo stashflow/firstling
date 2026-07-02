@@ -1,20 +1,22 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
-export function proxy(request: NextRequest) {
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isPortalRoute = createRouteMatcher(["/portal", "/api/billing(.*)"]);
+
+function requireBasicAdmin(request: NextRequest) {
   const username = process.env.ADMIN_BASIC_USER;
   const password = process.env.ADMIN_BASIC_PASSWORD;
 
   if (!username || !password) {
-    return NextResponse.next();
+    return null;
   }
 
   const authorization = request.headers.get("authorization");
-  const expected = `Basic ${Buffer.from(`${username}:${password}`).toString(
-    "base64",
-  )}`;
+  const expected = `Basic ${btoa(`${username}:${password}`)}`;
 
   if (authorization === expected) {
-    return NextResponse.next();
+    return null;
   }
 
   return new NextResponse("Authentication required", {
@@ -25,6 +27,22 @@ export function proxy(request: NextRequest) {
   });
 }
 
+export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
+  if (isAdminRoute(request)) {
+    const adminResponse = requireBasicAdmin(request);
+
+    if (adminResponse) {
+      return adminResponse;
+    }
+  }
+
+  if (isPortalRoute(request)) {
+    await auth.protect();
+  }
+
+  return NextResponse.next();
+});
+
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/portal/:path*", "/api/billing/:path*"],
 };

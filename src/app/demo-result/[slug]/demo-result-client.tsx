@@ -78,7 +78,8 @@ export function DemoResultClient({ call }: { call: DemoCall }) {
   return (
     <main className="min-h-screen bg-[#f4f5f4] px-4 py-5 text-[#101211] sm:px-8 sm:py-8">
       <div className="mx-auto max-w-5xl">
-        <motion.header
+        <motion.div
+          role="banner"
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.55 }}
@@ -100,7 +101,7 @@ export function DemoResultClient({ call }: { call: DemoCall }) {
             After a missed or after-hours call, First Ring turns the conversation
             into a lead you can follow up.
           </p>
-        </motion.header>
+        </motion.div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <motion.div

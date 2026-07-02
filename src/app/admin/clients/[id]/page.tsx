@@ -8,9 +8,11 @@ import { Wordmark } from "@/components/wordmark";
 import { requireAdminAccess } from "@/lib/admin-auth";
 import {
   getClientById,
+  markClientReadyEmailSent,
   updateClientCallerSetup,
   type Client,
 } from "@/lib/usage";
+import { sendClientReadyEmail } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -80,11 +82,24 @@ async function saveCallerSetup(formData: FormData) {
     notFound();
   }
 
-  await updateClientCallerSetup(id, {
+  const updatedClient = await updateClientCallerSetup(id, {
     callerPhoneNumber,
     callerStatus,
     callerNotes,
   });
+
+  if (
+    updatedClient &&
+    callerStatus === "live" &&
+    updatedClient.callerPhoneNumber &&
+    !updatedClient.readyEmailSentAt
+  ) {
+    const sent = await sendClientReadyEmail(updatedClient);
+
+    if (sent) {
+      await markClientReadyEmailSent(updatedClient.id);
+    }
+  }
   revalidatePath("/admin/clients");
   revalidatePath(`/admin/clients/${id}`);
   revalidatePath("/admin/usage");
@@ -215,6 +230,22 @@ export default async function AdminClientDetailPage({
                 <Field label="Phone" value={client.notificationPhone} />
                 <Field label="Caller status" value={client.callerStatus} />
                 <Field label="Caller live at" value={formatDate(client.callerLiveAt)} />
+                <Field
+                  label="Setup email"
+                  value={formatDate(client.setupEmailSentAt)}
+                />
+                <Field
+                  label="Ready email"
+                  value={formatDate(client.readyEmailSentAt)}
+                />
+                <Field
+                  label="Portal linked"
+                  value={client.clerkUserId ? "Yes" : "No"}
+                />
+                <Field
+                  label="Last portal login"
+                  value={formatDate(client.lastPortalLoginAt)}
+                />
                 <div className="rounded-[1.15rem] bg-[#f4f5f4] px-4 py-3">
                   <p className="text-xs font-black uppercase text-black/35">
                     Website

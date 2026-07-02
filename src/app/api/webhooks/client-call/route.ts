@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { insertUsageCall, normalizeUsageCallPayload } from "@/lib/usage";
+import { sendClientLeadEmail } from "@/lib/notifications";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function isAuthorized(request: NextRequest) {
   const secret = process.env.CLIENT_CALL_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET;
 
   if (!secret) {
-    return true;
+    return process.env.NODE_ENV !== "production";
   }
 
   const headerSecret = request.headers.get("x-webhook-secret");
@@ -70,14 +72,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const input = normalizeUsageCallPayload(payload);
-    const call = await insertUsageCall(input);
+    const saved = await insertUsageCall(input);
+
+    try {
+      await sendClientLeadEmail(saved.client, saved.call);
+    } catch (error) {
+      console.error("Client lead email failed", error);
+    }
 
     return NextResponse.json({
       success: true,
-      callId: call.id,
-      clientId: call.client.id,
-      billableMinutes: call.billableMinutes,
-      estimatedCost: call.estimatedCost,
+      callId: saved.id,
+      clientId: saved.client.id,
+      billableMinutes: saved.billableMinutes,
+      estimatedCost: saved.estimatedCost,
     });
   } catch (error) {
     console.error("Client call usage webhook failed", error);

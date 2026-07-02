@@ -1,4 +1,4 @@
-import { Check, PhoneCall } from "lucide-react";
+import { Check, LayoutDashboard, PhoneCall } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,17 +24,20 @@ export default function SignupSuccessPage() {
         </h1>
         <p className="mx-auto mt-5 max-w-lg text-lg font-bold leading-snug text-black/58">
           We will use your checkout details to start setting up your caller.
-          You can still call the demo anytime to test the experience.
+          Your dashboard will show the caller number as soon as it is ready.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Button asChild size="lg">
+            <Link href="/portal">
+              <LayoutDashboard className="size-5" />
+              Open Dashboard
+            </Link>
+          </Button>
+          <Button asChild variant="secondary" size="lg">
             <a href={`tel:${demoPhone}`}>
               <PhoneCall className="size-5" />
               Call Demo
             </a>
-          </Button>
-          <Button asChild variant="secondary" size="lg">
-            <Link href="/">Back to First Ring</Link>
           </Button>
         </div>
       </Card>

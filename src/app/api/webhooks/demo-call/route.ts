@@ -11,6 +11,7 @@ import {
 } from "@/lib/notifications";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function isAuthorized(request: NextRequest) {
   const secret = process.env.WEBHOOK_SECRET;
