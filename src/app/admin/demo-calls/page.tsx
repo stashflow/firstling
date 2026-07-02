@@ -27,7 +27,23 @@ export default async function AdminDemoCallsPage() {
               Demo Calls
             </h1>
           </div>
-          <p className="font-bold text-black/48">{calls.length} saved calls</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/admin/clients"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-5 text-sm font-black text-[#101211] shadow-[0_12px_28px_rgba(15,23,42,0.08)] ring-1 ring-black/8"
+            >
+              Clients
+            </Link>
+            <Link
+              href="/admin/usage"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-5 text-sm font-black text-[#101211] shadow-[0_12px_28px_rgba(15,23,42,0.08)] ring-1 ring-black/8"
+            >
+              Usage dashboard
+            </Link>
+            <p className="font-bold text-black/48">
+              {calls.length} saved calls
+            </p>
+          </div>
         </div>
 
         <div className="mt-8 overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.08)] ring-1 ring-black/6">

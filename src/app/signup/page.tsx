@@ -45,13 +45,103 @@ const plans = [
 ] as const;
 
 type PlanId = (typeof plans)[number]["id"];
+type ChoiceKey =
+  | "callerTone"
+  | "serviceMentionStyle"
+  | "bookingPreference"
+  | "handoffPreference"
+  | "alertPreference"
+  | "websiteUsage"
+  | "outcomeGoal";
+
+const setupQuestions: Array<{
+  key: ChoiceKey;
+  label: string;
+  options: string[];
+}> = [
+  {
+    key: "callerTone",
+    label: "How should the caller sound?",
+    options: [
+      "Warm and professional",
+      "Fast and direct",
+      "Premium and polished",
+    ],
+  },
+  {
+    key: "serviceMentionStyle",
+    label: "Should it mention other services before closing?",
+    options: [
+      "Mention relevant add-ons only",
+      "Yes, mention all core services",
+      "No, stay focused on what they asked for",
+    ],
+  },
+  {
+    key: "bookingPreference",
+    label: "How should it handle booking?",
+    options: [
+      "Collect preferred times",
+      "Try to book qualified callers",
+      "Have me follow up after every call",
+    ],
+  },
+  {
+    key: "handoffPreference",
+    label: "When should it hand off the call?",
+    options: [
+      "Urgent or high-value leads",
+      "Pricing questions",
+      "Never during the first setup",
+    ],
+  },
+  {
+    key: "alertPreference",
+    label: "When should you be alerted?",
+    options: [
+      "After every captured lead",
+      "Only urgent leads",
+      "Daily summary is fine",
+    ],
+  },
+  {
+    key: "websiteUsage",
+    label: "Should it use your website for answers?",
+    options: [
+      "Yes, use website details",
+      "Only use website for services and service area",
+      "No, I will provide details manually",
+    ],
+  },
+  {
+    key: "outcomeGoal",
+    label: "What should a perfect call produce?",
+    options: [
+      "A clean lead summary",
+      "A booked appointment request",
+      "A hot lead I can call back fast",
+    ],
+  },
+];
 
 export default function SignupPage() {
   const [businessName, setBusinessName] = useState("");
+  const [industry, setIndustry] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [extraNotes, setExtraNotes] = useState("");
   const [plan, setPlan] = useState<PlanId>("starter");
+  const [choices, setChoices] = useState<Record<ChoiceKey, string>>({
+    callerTone: "Warm and professional",
+    serviceMentionStyle: "Mention relevant add-ons only",
+    bookingPreference: "Collect preferred times",
+    handoffPreference: "Urgent or high-value leads",
+    alertPreference: "After every captured lead",
+    websiteUsage: "Yes, use website details",
+    outcomeGoal: "A clean lead summary",
+  });
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
   const selectedPlan = plans.find((item) => item.id === plan) || plans[0];
@@ -76,7 +166,17 @@ export default function SignupPage() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ businessName, ownerName, email, phone, plan }),
+        body: JSON.stringify({
+          businessName,
+          industry,
+          ownerName,
+          email,
+          phone,
+          plan,
+          websiteUrl,
+          extraNotes,
+          ...choices,
+        }),
       });
       const result = (await response.json()) as {
         success?: boolean;
@@ -223,6 +323,29 @@ export default function SignupPage() {
                 </label>
                 <label className="grid gap-2">
                   <span className="text-sm font-black text-black/45">
+                    Industry
+                  </span>
+                  <input
+                    required
+                    value={industry}
+                    onChange={(event) => setIndustry(event.target.value)}
+                    placeholder="Exterior cleaning, pressure washing, roofing..."
+                    className="h-14 rounded-[1.2rem] border border-black/8 bg-white px-4 text-base font-bold outline-none transition placeholder:text-black/24 focus:border-[#34c759] focus:ring-4 focus:ring-[#34c759]/12"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-black/45">
+                    Website
+                  </span>
+                  <input
+                    value={websiteUrl}
+                    onChange={(event) => setWebsiteUrl(event.target.value)}
+                    placeholder="https://yourcompany.com"
+                    className="h-14 rounded-[1.2rem] border border-black/8 bg-white px-4 text-base font-bold outline-none transition placeholder:text-black/24 focus:border-[#34c759] focus:ring-4 focus:ring-[#34c759]/12"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-black/45">
                     Your name
                   </span>
                   <input
@@ -256,6 +379,68 @@ export default function SignupPage() {
                     onChange={(event) => setPhone(event.target.value)}
                     placeholder="(555) 123-4567"
                     className="h-14 rounded-[1.2rem] border border-black/8 bg-white px-4 text-base font-bold outline-none transition placeholder:text-black/24 focus:border-[#34c759] focus:ring-4 focus:ring-[#34c759]/12"
+                  />
+                </label>
+
+                <div className="grid gap-4">
+                  <div>
+                    <p className="text-sm font-black text-black/45">
+                      Caller setup
+                    </p>
+                    <p className="mt-1 text-sm font-bold leading-snug text-black/42">
+                      Pick what you want included. You can change this later.
+                    </p>
+                  </div>
+                  {setupQuestions.map((question) => (
+                    <div key={question.key} className="grid gap-2">
+                      <span className="text-sm font-black text-[#101211]">
+                        {question.label}
+                      </span>
+                      <div className="grid gap-2">
+                        {question.options.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() =>
+                              setChoices((current) => ({
+                                ...current,
+                                [question.key]: option,
+                              }))
+                            }
+                            className={`flex items-center gap-3 rounded-[1.1rem] border px-4 py-3 text-left text-sm font-black transition ${
+                              choices[question.key] === option
+                                ? "border-[#101211] bg-[#101211] text-white"
+                                : "border-black/8 bg-white text-[#101211] hover:border-[#34c759]/60"
+                            }`}
+                          >
+                            <span
+                              className={`grid size-5 shrink-0 place-items-center rounded-full border ${
+                                choices[question.key] === option
+                                  ? "border-[#34c759] bg-[#34c759]"
+                                  : "border-black/16"
+                              }`}
+                            >
+                              {choices[question.key] === option ? (
+                                <Check className="size-3.5 text-white" />
+                              ) : null}
+                            </span>
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-black/45">
+                    Anything special?
+                  </span>
+                  <textarea
+                    value={extraNotes}
+                    onChange={(event) => setExtraNotes(event.target.value)}
+                    placeholder="Service area, prices, hours, services to avoid quoting, or anything the caller should know."
+                    className="min-h-28 resize-none rounded-[1.2rem] border border-black/8 bg-white px-4 py-3 text-base font-bold outline-none transition placeholder:text-black/24 focus:border-[#34c759] focus:ring-4 focus:ring-[#34c759]/12"
                   />
                 </label>
 

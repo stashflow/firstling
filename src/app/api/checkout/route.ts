@@ -5,10 +5,20 @@ export const runtime = "nodejs";
 
 type CheckoutPayload = {
   businessName?: string;
+  industry?: string;
   ownerName?: string;
   email?: string;
   phone?: string;
   plan?: string;
+  websiteUrl?: string;
+  callerTone?: string;
+  serviceMentionStyle?: string;
+  bookingPreference?: string;
+  handoffPreference?: string;
+  alertPreference?: string;
+  websiteUsage?: string;
+  outcomeGoal?: string;
+  extraNotes?: string;
 };
 
 const plans = {
@@ -71,18 +81,31 @@ export async function POST(request: NextRequest) {
   }
 
   const businessName = clean(payload.businessName);
+  const industry = clean(payload.industry);
   const ownerName = clean(payload.ownerName);
   const email = clean(payload.email);
   const phone = clean(payload.phone);
+  const websiteUrl = clean(payload.websiteUrl);
   const planKey = clean(payload.plan) as PlanKey;
   const selectedPlanKey: PlanKey = planKey in plans ? planKey : "starter";
   const plan = plans[selectedPlanKey];
+  const callerPreferences = {
+    industry,
+    callerTone: clean(payload.callerTone),
+    serviceMentionStyle: clean(payload.serviceMentionStyle),
+    bookingPreference: clean(payload.bookingPreference),
+    handoffPreference: clean(payload.handoffPreference),
+    alertPreference: clean(payload.alertPreference),
+    websiteUsage: clean(payload.websiteUsage),
+    outcomeGoal: clean(payload.outcomeGoal),
+    extraNotes: clean(payload.extraNotes),
+  };
 
-  if (!businessName || !ownerName || !email) {
+  if (!businessName || !industry || !ownerName || !email) {
     return NextResponse.json(
       {
         success: false,
-        error: "Business name, owner name, and email are required.",
+        error: "Business name, industry, owner name, and email are required.",
       },
       { status: 400 },
     );
@@ -117,16 +140,36 @@ export async function POST(request: NextRequest) {
       line_items: lineItems,
       metadata: {
         businessName,
+        industry,
         ownerName,
         phone,
+        websiteUrl,
         plan: selectedPlanKey,
+        callerTone: callerPreferences.callerTone,
+        serviceMentionStyle: callerPreferences.serviceMentionStyle,
+        bookingPreference: callerPreferences.bookingPreference,
+        handoffPreference: callerPreferences.handoffPreference,
+        alertPreference: callerPreferences.alertPreference,
+        websiteUsage: callerPreferences.websiteUsage,
+        outcomeGoal: callerPreferences.outcomeGoal,
+        extraNotes: callerPreferences.extraNotes.slice(0, 500),
       },
       subscription_data: {
         metadata: {
           businessName,
+          industry,
           ownerName,
           phone,
+          websiteUrl,
           plan: selectedPlanKey,
+          callerTone: callerPreferences.callerTone,
+          serviceMentionStyle: callerPreferences.serviceMentionStyle,
+          bookingPreference: callerPreferences.bookingPreference,
+          handoffPreference: callerPreferences.handoffPreference,
+          alertPreference: callerPreferences.alertPreference,
+          websiteUsage: callerPreferences.websiteUsage,
+          outcomeGoal: callerPreferences.outcomeGoal,
+          extraNotes: callerPreferences.extraNotes.slice(0, 500),
         },
       },
       success_url: `${siteUrl}/signup/success?session_id={CHECKOUT_SESSION_ID}`,
