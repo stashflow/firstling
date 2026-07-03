@@ -28,7 +28,7 @@ export default function SignupSuccessPage() {
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Button asChild size="lg">
-            <Link href="/portal">
+            <Link href="/portal/login">
               <LayoutDashboard className="size-5" />
               Open Dashboard
             </Link>

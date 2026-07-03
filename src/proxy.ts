@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { isClerkConfigured } from "@/lib/clerk";
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isPortalRoute = createRouteMatcher(["/portal", "/api/billing(.*)"]);
@@ -27,21 +28,35 @@ function requireBasicAdmin(request: NextRequest) {
   });
 }
 
-export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
-  if (isAdminRoute(request)) {
-    const adminResponse = requireBasicAdmin(request);
+const clerkConfigured = isClerkConfigured();
 
-    if (adminResponse) {
-      return adminResponse;
-    }
-  }
+export const proxy = clerkConfigured
+  ? clerkMiddleware(async (auth, request: NextRequest) => {
+      if (isAdminRoute(request)) {
+        const adminResponse = requireBasicAdmin(request);
 
-  if (isPortalRoute(request)) {
-    await auth.protect();
-  }
+        if (adminResponse) {
+          return adminResponse;
+        }
+      }
 
-  return NextResponse.next();
-});
+      if (isPortalRoute(request)) {
+        await auth.protect();
+      }
+
+      return NextResponse.next();
+    })
+  : async function proxyWithoutClerk(request: NextRequest) {
+      if (isAdminRoute(request)) {
+        const adminResponse = requireBasicAdmin(request);
+
+        if (adminResponse) {
+          return adminResponse;
+        }
+      }
+
+      return NextResponse.next();
+    };
 
 export const config = {
   matcher: ["/admin/:path*", "/portal/:path*", "/api/billing/:path*"],

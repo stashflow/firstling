@@ -1,5 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { isClerkConfigured } from "@/lib/clerk";
 import { getStripe } from "@/lib/stripe";
 import { getClientForPortal } from "@/lib/usage";
 
@@ -14,6 +15,16 @@ function siteUrl() {
 }
 
 export async function POST() {
+  if (!isClerkConfigured()) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Portal login is not configured yet. Add Clerk live keys first.",
+      },
+      { status: 503 },
+    );
+  }
+
   const user = await currentUser();
 
   if (!user) {
