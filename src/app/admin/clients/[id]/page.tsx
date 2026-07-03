@@ -124,12 +124,17 @@ export default async function AdminClientDetailPage({
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between gap-4">
           <Wordmark />
-          <Button asChild variant="secondary">
-            <Link href="/admin/clients">
-              <ArrowLeft className="size-4" />
-              Clients
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button asChild variant="secondary">
+              <Link href="/admin/leads">Leads</Link>
+            </Button>
+            <Button asChild variant="secondary">
+              <Link href="/admin/clients">
+                <ArrowLeft className="size-4" />
+                Clients
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="mt-8 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">

@@ -323,15 +323,26 @@ export default function Home() {
             transition={{ duration: 0.75 }}
             className="text-center lg:text-left"
           >
-            <div className="mb-7 inline-flex rounded-[1.35rem] bg-[#34c759] px-5 py-4">
-              <Wordmark variant="white" />
+            <div className="mb-7 inline-flex items-center gap-3 rounded-full border border-[#34c759]/18 bg-white/88 px-4 py-3 text-left shadow-[0_14px_32px_rgba(15,23,42,0.06)] backdrop-blur">
+              <span className="grid size-10 place-items-center rounded-full bg-[#34c759] text-white green-shadow">
+                <Sparkles className="size-4.5" />
+              </span>
+              <div>
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#34c759]">
+                  Built for exterior cleaning
+                </p>
+                <p className="text-sm font-bold text-black/55">
+                  Missed-call revenue recovery
+                </p>
+              </div>
             </div>
             <h1 className="mx-auto max-w-3xl text-5xl font-black leading-[0.9] text-[#101211] sm:text-7xl lg:mx-0">
-              A $400 lead can call at 8:30 PM.
+              A missed call can cost you a $400 job.
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-xl font-bold leading-snug text-black/62 sm:text-2xl lg:mx-0">
-              If nobody answers, they call the next company. First Ring answers
-              before they leave.
+              First Ring answers missed and after-hours calls, captures the job
+              details, and helps you call back before they hire the next
+              company.
             </p>
             <div className="mx-auto mt-7 max-w-xl rounded-[1.7rem] bg-white p-4 text-left shadow-[0_18px_48px_rgba(15,23,42,0.08)] ring-1 ring-black/6 lg:mx-0">
               <p className="text-xs font-black uppercase text-black/38">

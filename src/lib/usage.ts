@@ -66,7 +66,17 @@ export type UsageCall = {
   serviceRequested?: string | null;
   bookingStatus?: string | null;
   transcriptSummary?: string | null;
+  rawPayload?: unknown;
   createdAt: string;
+};
+
+export type AdminClientCall = UsageCall & {
+  businessName: string;
+  ownerName?: string | null;
+  notificationEmail?: string | null;
+  clientBillingStatus: string;
+  clientCallerStatus: string;
+  clientCallerPhoneNumber?: string | null;
 };
 
 export type UsageCallInput = {
@@ -147,7 +157,17 @@ type UsageCallRow = {
   service_requested: string | null;
   booking_status: string | null;
   transcript_summary: string | null;
+  raw_payload?: unknown;
   created_at: string;
+};
+
+type AdminClientCallRow = UsageCallRow & {
+  business_name: string;
+  owner_name: string | null;
+  notification_email: string | null;
+  billing_status: string;
+  caller_status: string;
+  caller_phone_number: string | null;
 };
 
 type UsageDashboardDbRow = ClientRow & {
@@ -277,7 +297,20 @@ function mapUsageCall(row: UsageCallRow): UsageCall {
     serviceRequested: row.service_requested,
     bookingStatus: row.booking_status,
     transcriptSummary: row.transcript_summary,
+    rawPayload: row.raw_payload,
     createdAt: row.created_at,
+  };
+}
+
+function mapAdminClientCall(row: AdminClientCallRow): AdminClientCall {
+  return {
+    ...mapUsageCall(row),
+    businessName: row.business_name,
+    ownerName: row.owner_name,
+    notificationEmail: row.notification_email,
+    clientBillingStatus: row.billing_status,
+    clientCallerStatus: row.caller_status,
+    clientCallerPhoneNumber: row.caller_phone_number,
   };
 }
 
@@ -534,6 +567,46 @@ export async function listRecentClientCalls(clientId: string, limit = 8) {
   `) as UsageCallRow[];
 
   return rows.map(mapUsageCall);
+}
+
+export async function listAdminClientCalls(limit = 250) {
+  const sql = getSql();
+  const rows = (await sql`
+    select
+      ca.*,
+      c.business_name,
+      c.owner_name,
+      c.notification_email,
+      c.billing_status,
+      c.caller_status,
+      c.caller_phone_number
+    from calls ca
+    inner join clients c on c.id = ca.client_id
+    order by ca.created_at desc
+    limit ${limit}
+  `) as AdminClientCallRow[];
+
+  return rows.map(mapAdminClientCall);
+}
+
+export async function getAdminClientCallById(id: string) {
+  const sql = getSql();
+  const rows = (await sql`
+    select
+      ca.*,
+      c.business_name,
+      c.owner_name,
+      c.notification_email,
+      c.billing_status,
+      c.caller_status,
+      c.caller_phone_number
+    from calls ca
+    inner join clients c on c.id = ca.client_id
+    where ca.id = ${id}
+    limit 1
+  `) as AdminClientCallRow[];
+
+  return rows[0] ? mapAdminClientCall(rows[0]) : null;
 }
 
 export async function markClientSetupEmailSent(clientId: string) {

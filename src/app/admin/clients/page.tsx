@@ -125,6 +125,12 @@ export default async function AdminClientsPage() {
               Usage dashboard
             </Link>
             <Link
+              href="/admin/leads"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-white px-5 text-sm font-black text-[#101211] shadow-[0_12px_28px_rgba(15,23,42,0.08)] ring-1 ring-black/8"
+            >
+              Leads
+            </Link>
+            <Link
               href="/admin/demo-calls"
               className="inline-flex h-12 items-center justify-center rounded-full bg-white px-5 text-sm font-black text-[#101211] shadow-[0_12px_28px_rgba(15,23,42,0.08)] ring-1 ring-black/8"
             >
